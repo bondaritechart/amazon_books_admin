@@ -1,0 +1,122 @@
+import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import { CURRENT_USER_QUERY } from 'data-access';
+import { Routes } from 'constants/routes';
+import { CurrentUser } from 'types/graphql';
+
+// Create a server-side Apollo client
+function createServerApolloClient(token?: string) {
+  const httpLink = createHttpLink({
+    uri: 'http://localhost:5000/graphql',
+    fetch: fetch,
+  });
+
+  const authLink = setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+        ...(token && { authorization: `Bearer ${token}` }),
+      },
+    };
+  });
+
+  return new ApolloClient({
+    link: authLink.concat(httpLink),
+    cache: new InMemoryCache(),
+    ssrMode: true,
+  });
+}
+
+// Get access token from cookies (server-side)
+export async function getAccessTokenFromCookies(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('accessToken');
+    return accessToken?.value || null;
+  } catch (error) {
+    console.error('Error reading access token from cookies:', error);
+    return null;
+  }
+}
+
+// Get current URL from server-side headers
+async function getCurrentUrl(): Promise<string> {
+  try {
+    const headersList = await headers();
+
+    // Try to get pathname from our custom header (set by middleware)
+    let pathname = headersList.get('x-pathname');
+
+    // Fallback to referer header
+    if (!pathname) {
+      const referer = headersList.get('referer');
+      if (referer && referer.startsWith('http')) {
+        const url = new URL(referer);
+        pathname = url.pathname;
+      }
+    }
+
+    // Final fallback
+    return pathname || '/';
+  } catch (error) {
+    console.error('Error getting current URL:', error);
+    return '/';
+  }
+}
+
+// Check if user should be redirected based on auth state and current URL
+async function checkAuthRedirect(
+  currentUser: CurrentUser | null
+): Promise<void> {
+  let redirectTo: string | null = null;
+  try {
+    const currentPath = await getCurrentUrl();
+    // If no user and on dashboard route, redirect to login
+    if (
+      !currentUser &&
+      currentPath.startsWith(Routes.DASHBOARD) &&
+      !currentPath.startsWith(Routes.LOGIN)
+    ) {
+      redirectTo = Routes.LOGIN;
+    } else if (currentUser && currentPath.startsWith(Routes.LOGIN)) {
+      redirectTo = Routes.DASHBOARD;
+    }
+  } catch (error) {
+    console.error('Error in auth redirect check:', error);
+  } finally {
+    if (redirectTo) {
+      redirect(redirectTo);
+    }
+  }
+}
+
+// Get current user from server-side
+export async function getCurrentUserFromServer(): Promise<CurrentUser | null> {
+  try {
+    const token = await getAccessTokenFromCookies();
+    if (!token) {
+      return null;
+    }
+
+    const client = createServerApolloClient(token);
+
+    const { data } = await client.query({
+      query: CURRENT_USER_QUERY,
+      errorPolicy: 'all',
+    });
+
+    return data?.currentUser || null;
+  } catch (error) {
+    console.error('Error fetching current user from server:', error);
+    return null;
+  }
+}
+
+// Get current user and handle redirects
+export async function getCurrentUserWithRedirect(): Promise<CurrentUser | null> {
+  const currentUser = await getCurrentUserFromServer();
+  await checkAuthRedirect(currentUser);
+  return currentUser;
+}
