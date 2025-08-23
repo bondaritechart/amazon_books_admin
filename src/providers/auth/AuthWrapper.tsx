@@ -1,7 +1,7 @@
+import { getCurrentUserWithRedirect } from '@/lib/auth-server';
+import { ApolloWrapper } from '@/providers/apollo/ApolloWrapper';
+import { SessionProvider } from '@/providers/session/SessionProvider';
 import React from 'react';
-import { getCurrentUserWithRedirect } from 'lib/auth-server';
-import { SessionProvider } from 'providers/session/SessionProvider';
-import { ApolloWrapper } from 'providers/apollo/ApolloWrapper';
 import { ClientAuthSync } from './ClientAuthSync';
 
 interface AuthWrapperProps {
@@ -20,4 +20,4 @@ export async function AuthWrapper({ children }: AuthWrapperProps) {
       </SessionProvider>
     </ApolloWrapper>
   );
-} 
+}

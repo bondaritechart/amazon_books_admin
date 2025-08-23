@@ -1,15 +1,15 @@
+import { Routes } from '@/constants/routes';
+import { CURRENT_USER_QUERY } from '@/data-access/user/queries/current-user';
+import { CurrentUserQuery } from '@/types/graphql';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { CURRENT_USER_QUERY } from 'data-access';
-import { Routes } from 'constants/routes';
-import { CurrentUser } from 'types/graphql';
 
 // Create a server-side Apollo client
 function createServerApolloClient(token?: string) {
   const httpLink = createHttpLink({
-    uri: 'http://localhost:5000/graphql',
+    uri: `${process.env.NEXT_PUBLIC_API_URL}/graphql`,
     fetch: fetch,
   });
 
@@ -68,7 +68,7 @@ async function getCurrentUrl(): Promise<string> {
 
 // Check if user should be redirected based on auth state and current URL
 async function checkAuthRedirect(
-  currentUser: CurrentUser | null
+  currentUser: CurrentUserQuery | null
 ): Promise<void> {
   let redirectTo: string | null = null;
   try {
@@ -93,7 +93,7 @@ async function checkAuthRedirect(
 }
 
 // Get current user from server-side
-export async function getCurrentUserFromServer(): Promise<CurrentUser | null> {
+export async function getCurrentUserFromServer(): Promise<CurrentUserQuery | null> {
   try {
     const token = await getAccessTokenFromCookies();
     if (!token) {
@@ -115,7 +115,7 @@ export async function getCurrentUserFromServer(): Promise<CurrentUser | null> {
 }
 
 // Get current user and handle redirects
-export async function getCurrentUserWithRedirect(): Promise<CurrentUser | null> {
+export async function getCurrentUserWithRedirect(): Promise<CurrentUserQuery | null> {
   const currentUser = await getCurrentUserFromServer();
   await checkAuthRedirect(currentUser);
   return currentUser;
