@@ -1,7 +1,7 @@
 'use client';
 
+import { useCurrentUser } from '@/data-access/auth/hooks/use-current-user';
 import { useEffect } from 'react';
-import { useCurrentUser } from 'data-access/auth';
 
 /**
  * Client-side component that syncs authentication state
@@ -15,18 +15,18 @@ export function ClientAuthSync() {
     const checkAuthToken = () => {
       const hasToken = document.cookie
         .split(';')
-        .some(cookie => cookie.trim().startsWith('accessToken='));
-      
+        .some((cookie) => cookie.trim().startsWith('accessToken='));
+
       return hasToken;
     };
 
     // Initial check
     const initialTokenExists = checkAuthToken();
-    
+
     // Set up interval to check for token changes
     const interval = setInterval(() => {
       const tokenExists = checkAuthToken();
-      
+
       // If token state changed, refetch current user
       if (tokenExists !== initialTokenExists) {
         refetch();
@@ -39,7 +39,7 @@ export function ClientAuthSync() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Listen for custom events (when login happens)
     const handleAuthChange = () => {
       setTimeout(() => refetch(), 100); // Small delay to ensure cookie is set
@@ -57,4 +57,4 @@ export function ClientAuthSync() {
   }, [refetch]);
 
   return null; // This component doesn't render anything
-} 
+}

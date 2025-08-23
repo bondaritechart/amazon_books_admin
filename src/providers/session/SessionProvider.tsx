@@ -1,10 +1,10 @@
 'use client';
 
+import { CurrentUserQuery } from '@/types/graphql';
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CurrentUser } from 'types/graphql';
 
 interface SessionState {
-  user: CurrentUser | null;
+  user: CurrentUserQuery | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -12,13 +12,13 @@ interface SessionState {
 
 type SessionAction =
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_USER'; payload: CurrentUser }
+  | { type: 'SET_USER'; payload: CurrentUserQuery }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_USER' }
   | { type: 'CLEAR_ERROR' };
 
 interface SessionContextType extends SessionState {
-  setUser: (user: CurrentUser) => void;
+  setUser: (user: CurrentUserQuery) => void;
   clearUser: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string) => void;
@@ -32,7 +32,10 @@ const initialState: SessionState = {
   isAuthenticated: false,
 };
 
-const sessionReducer = (state: SessionState, action: SessionAction): SessionState => {
+const sessionReducer = (
+  state: SessionState,
+  action: SessionAction
+): SessionState => {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
@@ -68,7 +71,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 interface SessionProviderProps {
   children: React.ReactNode;
-  initialUser?: CurrentUser | null;
+  initialUser?: CurrentUserQuery | null;
 }
 
 export const SessionProvider: React.FC<SessionProviderProps> = ({
@@ -97,7 +100,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     }
   }, [initialUser]);
 
-  const setUser = React.useCallback((user: CurrentUser) => {
+  const setUser = React.useCallback((user: CurrentUserQuery) => {
     dispatch({ type: 'SET_USER', payload: user });
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -133,9 +136,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
   };
 
   return (
-    <SessionContext.Provider value={value}>
-      {children}
-    </SessionContext.Provider>
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
   );
 };
 
@@ -145,4 +146,4 @@ export const useSession = (): SessionContextType => {
     throw new Error('useSession must be used within a SessionProvider');
   }
   return context;
-}; 
+};
