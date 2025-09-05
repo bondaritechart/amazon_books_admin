@@ -1,9 +1,9 @@
 import { AuthWrapper } from '@/providers/auth';
-import ThemedLayout from '@/theme/ThemedLayout';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import type { Metadata } from 'next';
 import { Raleway } from 'next/font/google';
-import 'theme/global.scss';
+import '@radix-ui/themes/styles.css';
+import '../theme/global.css';
 import { Toaster } from 'react-hot-toast';
 
 const paragraph = Raleway({
@@ -28,17 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ThemeProvider>
-      <html lang="en">
-        <body className={`${paragraph.variable} ${heading.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${paragraph.variable} ${heading.variable}`}>
+        <ThemeProvider>
           <AuthWrapper>
-            <ThemedLayout>
-              {children}
-              <Toaster />
-            </ThemedLayout>
+            {children}
+            <Toaster />
           </AuthWrapper>
-        </body>
-      </html>
-    </ThemeProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

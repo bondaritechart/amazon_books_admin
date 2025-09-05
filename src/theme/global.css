@@ -1,0 +1,10 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.radix-themes {
+    --default-font-family: 'Raleway', sans-serif;
+    --heading-font-family: 'Raleway', sans-serif;
+}
