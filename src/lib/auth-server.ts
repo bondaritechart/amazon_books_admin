@@ -1,3 +1,5 @@
+'use server';
+
 import { Routes } from '@/constants/routes';
 import { CURRENT_USER_QUERY } from '@/data-access/user/queries/current-user';
 import { CurrentUserQuery } from '@/types/graphql';
@@ -28,6 +30,11 @@ function createServerApolloClient(token?: string) {
     ssrMode: true,
   });
 }
+
+export const setAuthToken = async (token: string) => {
+  const cookieStore = await cookies();
+  cookieStore.set('accessToken', token);
+};
 
 // Get access token from cookies (server-side)
 export async function getAccessTokenFromCookies(): Promise<string | null> {

@@ -3,11 +3,14 @@
 
 import { HttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { onError } from '@apollo/client/link/error';
+
 import {
   ApolloNextAppProvider,
   ApolloClient,
   InMemoryCache,
 } from '@apollo/client-integration-nextjs';
+import toast from 'react-hot-toast';
 
 // Function to get cookie value by name
 function getCookie(name: string): string | null {
@@ -54,6 +57,45 @@ function makeClient() {
       },
     };
   });
+
+  // Create error link to handle GraphQL and network errors
+  const errorLink = onError(
+    ({ graphQLErrors, networkError, operation, forward }) => {
+      if (graphQLErrors) {
+        graphQLErrors.forEach(({ message, locations, path, extensions }) => {
+          console.error(
+            `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`,
+            extensions
+          );
+
+          // Handle specific error types
+          if (extensions?.code === 'UNAUTHENTICATED') {
+            toast.error('Authentication required. Please log in.');
+            // Optional: Redirect to login page or clear invalid token
+            // window.location.href = '/login';
+          } else if (extensions?.code === 'FORBIDDEN') {
+            toast.error('You do not have permission to perform this action.');
+          } else {
+            // Generic error handling
+            toast.error(message || 'An error occurred');
+          }
+        });
+      }
+
+      if (networkError) {
+        console.error(`Network error: ${networkError}`);
+
+        // Handle different types of network errors
+        if (networkError.message.includes('fetch')) {
+          toast.error('Network error. Please check your internet connection.');
+        } else if (networkError.message.includes('500')) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error('Connection error. Please try again.');
+        }
+      }
+    }
+  );
 
   // use the `ApolloClient` from "@apollo/client-integration-nextjs"
   return new ApolloClient({
