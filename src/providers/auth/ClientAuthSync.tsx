@@ -11,6 +11,7 @@ export function ClientAuthSync() {
   const { refetch } = useCurrentUser();
 
   useEffect(() => {
+    console.log('debug here');
     // Function to check if accessToken cookie exists
     const checkAuthToken = () => {
       const hasToken = document.cookie
@@ -54,7 +55,7 @@ export function ClientAuthSync() {
       window.removeEventListener('auth:login', handleAuthChange);
       window.removeEventListener('auth:logout', handleAuthChange);
     };
-  }, [refetch]);
+  }, []);
 
   return null; // This component doesn't render anything
 }

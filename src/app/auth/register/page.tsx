@@ -1,9 +1,11 @@
 'use client';
 
 import { TextInput } from '@/components/form/text-input/text-input';
+import { useCurrentUser } from '@/data-access/auth/hooks/use-current-user';
 import { useRegister } from '@/data-access/auth/hooks/use-register';
 import { setAuthToken } from '@/lib/auth-server';
 import { useForm, FormProvider } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import classes from './registrer.module.scss';
 import { Card, Container, Flex, Heading, Button } from '@radix-ui/themes';
 
@@ -19,6 +21,7 @@ export default function RegisterPage() {
   const methods = useForm<FieldValues>();
 
   const [register] = useRegister();
+  const { refetch } = useCurrentUser();
 
   const onSubmit = async (data: FieldValues) => {
     const resp = await register({
@@ -28,7 +31,8 @@ export default function RegisterPage() {
     });
     if (resp?.data) {
       await setAuthToken(resp.data.register.token);
-      alert('Registered successfully!');
+      toast.success('Registration successful.');
+      await refetch();
     }
   };
 

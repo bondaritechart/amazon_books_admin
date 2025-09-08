@@ -55,7 +55,6 @@ async function getCurrentUrl(): Promise<string> {
 
     // Try to get pathname from our custom header (set by middleware)
     let pathname = headersList.get('x-pathname');
-
     // Fallback to referer header
     if (!pathname) {
       const referer = headersList.get('referer');
@@ -81,13 +80,13 @@ async function checkAuthRedirect(
   try {
     const currentPath = await getCurrentUrl();
     // If no user and on dashboard route, redirect to login
-    if (
-      !currentUser &&
-      currentPath.startsWith(Routes.DASHBOARD) &&
-      !currentPath.startsWith(Routes.LOGIN)
-    ) {
+    if (!currentUser && currentPath.startsWith(Routes.DASHBOARD)) {
       redirectTo = Routes.LOGIN;
-    } else if (currentUser && currentPath.startsWith(Routes.LOGIN)) {
+    } else if (
+      currentUser &&
+      (currentPath.startsWith(Routes.LOGIN) ||
+        currentPath.startsWith(Routes.REGISTER))
+    ) {
       redirectTo = Routes.DASHBOARD;
     }
   } catch (error) {

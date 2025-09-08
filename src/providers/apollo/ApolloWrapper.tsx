@@ -1,6 +1,7 @@
 'use client';
 // ^ this file needs the "use client" pragma
 
+import { Routes } from '@/constants/routes';
 import { HttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
@@ -67,12 +68,13 @@ function makeClient() {
             `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`,
             extensions
           );
-
+          console.log('debug window.location.href', window.location.href);
           // Handle specific error types
           if (extensions?.code === 'UNAUTHENTICATED') {
-            toast.error('Authentication required. Please log in.');
-            // Optional: Redirect to login page or clear invalid token
-            // window.location.href = '/login';
+            if (window.location.href.includes('dashboard')) {
+              toast.error('Authentication required. Please log in.');
+              window.location.href = Routes.LOGIN;
+            }
           } else if (extensions?.code === 'FORBIDDEN') {
             toast.error('You do not have permission to perform this action.');
           } else {
@@ -101,7 +103,7 @@ function makeClient() {
   return new ApolloClient({
     // use the `InMemoryCache` from "@apollo/client-integration-nextjs"
     cache: new InMemoryCache(),
-    link: authLink.concat(httpLink),
+    link: errorLink.concat(authLink.concat(httpLink)),
   });
 }
 

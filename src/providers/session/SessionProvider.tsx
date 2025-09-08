@@ -5,13 +5,11 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 interface SessionState {
   user: CurrentUserQuery | null;
-  isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
 }
 
 type SessionAction =
-  | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_USER'; payload: CurrentUserQuery }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_USER' }
@@ -20,14 +18,12 @@ type SessionAction =
 interface SessionContextType extends SessionState {
   setUser: (user: CurrentUserQuery) => void;
   clearUser: () => void;
-  setLoading: (loading: boolean) => void;
   setError: (error: string) => void;
   clearError: () => void;
 }
 
 const initialState: SessionState = {
   user: null,
-  isLoading: true,
   error: null,
   isAuthenticated: false,
 };
@@ -37,28 +33,23 @@ const sessionReducer = (
   action: SessionAction
 ): SessionState => {
   switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
     case 'SET_USER':
       return {
         ...state,
         user: action.payload,
         isAuthenticated: true,
-        isLoading: false,
         error: null,
       };
     case 'SET_ERROR':
       return {
         ...state,
         error: action.payload,
-        isLoading: false,
       };
     case 'CLEAR_USER':
       return {
         ...state,
         user: null,
         isAuthenticated: false,
-        isLoading: false,
       };
     case 'CLEAR_ERROR':
       return { ...state, error: null };
@@ -82,7 +73,6 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     ...initialState,
     user: initialUser,
     isAuthenticated: !!initialUser,
-    isLoading: !initialUser, // If we have initial user, we're not loading
   });
 
   // Sync with localStorage on client side
@@ -114,10 +104,6 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     }
   }, []);
 
-  const setLoading = React.useCallback((loading: boolean) => {
-    dispatch({ type: 'SET_LOADING', payload: loading });
-  }, []);
-
   const setError = React.useCallback((error: string) => {
     dispatch({ type: 'SET_ERROR', payload: error });
   }, []);
@@ -130,7 +116,6 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({
     ...state,
     setUser,
     clearUser,
-    setLoading,
     setError,
     clearError,
   };

@@ -8,3 +8,6 @@
     --default-font-family: 'Raleway', sans-serif;
     --heading-font-family: 'Raleway', sans-serif;
 }
+.rt-Button {
+    cursor: pointer;
+}
