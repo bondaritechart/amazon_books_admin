@@ -11,7 +11,6 @@ export function ClientAuthSync() {
   const { refetch } = useCurrentUser();
 
   useEffect(() => {
-    console.log('debug here');
     // Function to check if accessToken cookie exists
     const checkAuthToken = () => {
       const hasToken = document.cookie

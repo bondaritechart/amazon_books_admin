@@ -19,11 +19,9 @@ export function useCurrentUser() {
   });
 
   useEffect(() => {
-    console.log('debug useCurrentUser');
     if (loading) {
       return;
     }
-    console.log('debug current-user ', data);
     if (error) {
       setError(error.message);
       clearUser();
