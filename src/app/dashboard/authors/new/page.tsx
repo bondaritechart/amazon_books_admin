@@ -11,14 +11,31 @@ export default function Page() {
   const methods = useForm();
   const [createAuthor] = useCreateAuthor();
 
-  const handleSave = (data: any) => {
+  const handleSave = (data: Record<string, unknown>) => {
     console.log('debug data', data);
+    
+    // Prepare the input data
+    const input: Record<string, unknown> = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      biography: data.biography,
+    };
+    
+    // Only include avatar if a file is selected
+    if (data.avatar && data.avatar instanceof File) {
+      input.avatar = data.avatar;
+    }
+    
+    console.log('debug input', input);
+    
     createAuthor({
       variables: {
-        input: data,
+        input,
       },
     }).then((r) => {
       console.log('debug r', r);
+    }).catch((error) => {
+      console.error('Error creating author:', error);
     });
   };
 
@@ -31,7 +48,7 @@ export default function Page() {
             <TextInput name="firstName" label="First name" />
             <TextInput name="lastName" label="Last name" />
             <TextArea name="biography" label="Biography" />
-            <FileUpload label="Avatar" name="avatar" />
+            <FileUpload label="Avatar" name="avatar" accept="image/*" />
             <Button onClick={methods.handleSubmit(handleSave)}>Add</Button>
           </Flex>
         </form>

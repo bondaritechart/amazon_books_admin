@@ -6,6 +6,7 @@ export const CREATE_AUTHOR = gql`
       id
       firstName
       lastName
+      biography
       avatar
     }
   }

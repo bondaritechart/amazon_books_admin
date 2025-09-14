@@ -1,10 +1,11 @@
 'use client';
-// ^ this file needs the "use client" pragma
 
 import { Routes } from '@/constants/routes';
-import { HttpLink, from } from '@apollo/client';
+import { from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
+// @ts-expect-error - apollo-upload-client types issue
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 
 import {
   ApolloNextAppProvider,
@@ -29,7 +30,7 @@ function getCookie(name: string): string | null {
 
 // have a function to create a client for you
 function makeClient() {
-  const httpLink = new HttpLink({
+  const uploadLink = new UploadHttpLink({
     // this needs to be an absolute url, as relative urls cannot be used in SSR
     uri: `${process.env.NEXT_PUBLIC_API_URL}/graphql`,
     // you can disable result caching here if you want to
@@ -51,38 +52,54 @@ function makeClient() {
     const token = getCookie('accessToken');
 
     // Return the headers to the context so httpLink can read them
+    // Important: Don't override Content-Type header as UploadHttpLink
+    // needs to set it automatically to multipart/form-data for file uploads
+    const authHeaders: Record<string, string> = {
+      // Add Apollo-specific headers to bypass CSRF protection
+      'apollo-require-preflight': 'true',
+    };
+    
+    if (token) {
+      authHeaders.authorization = `Bearer ${token}`;
+    }
+
     return {
       headers: {
         ...headers,
-        ...(token && { authorization: `Bearer ${token}` }),
+        ...authHeaders,
       },
     };
   });
 
-  // Create error link to handle GraphQL and network errors
+  // Create an error link to handle GraphQL and network errors
   const errorLink = onError(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ({ graphQLErrors, networkError }: any) => {
       if (graphQLErrors) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        graphQLErrors.forEach(({ message, locations, path, extensions }: any) => {
-          console.error(
-            `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`,
-            extensions
-          );
-          // Handle specific error types
-          if (extensions?.code === 'UNAUTHENTICATED') {
-            if (typeof window !== 'undefined' && window.location.href.includes('dashboard')) {
-              toast.error('Authentication required. Please log in.');
-              window.location.href = Routes.LOGIN;
+        graphQLErrors.forEach(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({ message, locations, path, extensions }: any) => {
+            console.error(
+              `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`,
+              extensions
+            );
+            // Handle specific error types
+            if (extensions?.code === 'UNAUTHENTICATED') {
+              if (
+                typeof window !== 'undefined' &&
+                window.location.href.includes('dashboard')
+              ) {
+                toast.error('Authentication required. Please log in.');
+                window.location.href = Routes.LOGIN;
+              }
+            } else if (extensions?.code === 'FORBIDDEN') {
+              toast.error('You do not have permission to perform this action.');
+            } else {
+              // Generic error handling
+              toast.error(message || 'An error occurred');
             }
-          } else if (extensions?.code === 'FORBIDDEN') {
-            toast.error('You do not have permission to perform this action.');
-          } else {
-            // Generic error handling
-            toast.error(message || 'An error occurred');
           }
-        });
+        );
       }
 
       if (networkError) {
@@ -104,7 +121,7 @@ function makeClient() {
   return new ApolloClient({
     // use the `InMemoryCache` from "@apollo/client-integration-nextjs"
     cache: new InMemoryCache(),
-    link: from([errorLink, authLink, httpLink]),
+    link: from([errorLink, authLink, uploadLink]),
   });
 }
 
