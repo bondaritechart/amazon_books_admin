@@ -1,5 +1,10 @@
-import { Box } from '@radix-ui/themes';
+import { Box, Button } from '@radix-ui/themes';
 
 export default function Page() {
-  return <Box>DASHBOARD</Box>;
+  return (
+    <Box>
+      DASHBOARD
+      <Button>asdasd</Button>
+    </Box>
+  );
 }

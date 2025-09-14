@@ -2,7 +2,7 @@
 
 import { CURRENT_USER_QUERY } from '@/data-access/auth/queries/current-user';
 import { useSession } from '@/providers/session/SessionProvider';
-import { useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 

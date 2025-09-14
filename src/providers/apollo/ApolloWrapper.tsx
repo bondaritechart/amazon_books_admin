@@ -2,7 +2,7 @@
 // ^ this file needs the "use client" pragma
 
 import { Routes } from '@/constants/routes';
-import { HttpLink } from '@apollo/client';
+import { HttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 
@@ -61,17 +61,18 @@ function makeClient() {
 
   // Create error link to handle GraphQL and network errors
   const errorLink = onError(
-    ({ graphQLErrors, networkError, operation, forward }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ({ graphQLErrors, networkError }: any) => {
       if (graphQLErrors) {
-        graphQLErrors.forEach(({ message, locations, path, extensions }) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        graphQLErrors.forEach(({ message, locations, path, extensions }: any) => {
           console.error(
             `GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`,
             extensions
           );
-          console.log('debug window.location.href', window.location.href);
           // Handle specific error types
           if (extensions?.code === 'UNAUTHENTICATED') {
-            if (window.location.href.includes('dashboard')) {
+            if (typeof window !== 'undefined' && window.location.href.includes('dashboard')) {
               toast.error('Authentication required. Please log in.');
               window.location.href = Routes.LOGIN;
             }
@@ -103,7 +104,7 @@ function makeClient() {
   return new ApolloClient({
     // use the `InMemoryCache` from "@apollo/client-integration-nextjs"
     cache: new InMemoryCache(),
-    link: errorLink.concat(authLink.concat(httpLink)),
+    link: from([errorLink, authLink, httpLink]),
   });
 }
 
